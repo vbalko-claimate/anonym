@@ -1,0 +1,2 @@
+Processing input/bad-ipv4.csv
+Error parsing IP: .1.2. (field: test, line: 2)

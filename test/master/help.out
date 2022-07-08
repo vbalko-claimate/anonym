@@ -1,0 +1,33 @@
+usage: anonym.py [-h] [-Fn FIELD_NAME] [-Fe FIELD_EMAIL] [-Fu FIELD_ID]
+                 [-Fi FIELD_IP] [-Fc FIELD_COORD] [-Fh FIELD_HOST]
+                 [-t {csv,json}] [-p] -o OUTPUT_FOLDER [-v]
+                 files [files ...]
+
+Anonym 1.02 - data anonymization tool
+
+positional arguments:
+  files                 Names of the data file(s) to anonymize
+
+options:
+  -h, --help            show this help message and exit
+  -Fn FIELD_NAME, --field-name FIELD_NAME
+                        Field containing personal names
+  -Fe FIELD_EMAIL, --field-email FIELD_EMAIL
+                        Field containing emails
+  -Fu FIELD_ID, --field-id FIELD_ID
+                        Field containing unique IDs
+  -Fi FIELD_IP, --field-ip FIELD_IP
+                        Field containing IPs
+  -Fc FIELD_COORD, --field-coord FIELD_COORD
+                        Field containing coordinates
+  -Fh FIELD_HOST, --field-host FIELD_HOST
+                        Field containing host names
+  -t {csv,json}, --type {csv,json}
+                        Type of input files; valid values - 'csv' (default),
+                        'json'
+  -p, --predictable-names
+                        Generate predictable artificial names (to use for
+                        regression testing)
+  -o OUTPUT_FOLDER, --output-folder OUTPUT_FOLDER
+                        Output folder to use
+  -v, --verbose         Verbose output

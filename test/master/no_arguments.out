@@ -1,0 +1,5 @@
+usage: anonym.py [-h] [-Fn FIELD_NAME] [-Fe FIELD_EMAIL] [-Fu FIELD_ID]
+                 [-Fi FIELD_IP] [-Fc FIELD_COORD] [-Fh FIELD_HOST]
+                 [-t {csv,json}] [-p] -o OUTPUT_FOLDER [-v]
+                 files [files ...]
+anonym.py: error: the following arguments are required: files, -o/--output-folder

@@ -1,0 +1,2 @@
+Processing input/csv-json.csv
+Referenced header(s) not found: ['badname1', 'badname2']

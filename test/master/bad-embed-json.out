@@ -1,0 +1,2 @@
+Processing input/bad-embed-json.csv
+Error parsing JSON: [ (field: test.a, line: 2)

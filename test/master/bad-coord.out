@@ -1,0 +1,2 @@
+Processing input/bad-coord.csv
+Error parsing coordinate: -- (field: test, line: 2)

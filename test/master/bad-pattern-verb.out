@@ -1,0 +1,20 @@
+Error parsing pattern: '
+Traceback (most recent call last):
+  File "../anonym.py", line 86, in __init__
+    self.path = jsonpath_ng.ext.parse(path)
+  File "/home/kali/.local/lib/python3.8/site-packages/jsonpath_ng/ext/parser.py", line 172, in parse
+    return ExtentedJsonPathParser(debug=debug).parse(path)
+  File "/home/kali/.local/lib/python3.8/site-packages/jsonpath_ng/parser.py", line 44, in parse
+    return self.parse_token_stream(lexer.tokenize(string))
+  File "/home/kali/.local/lib/python3.8/site-packages/jsonpath_ng/parser.py", line 67, in parse_token_stream
+    return new_parser.parse(lexer = IteratorToTokenStream(token_iterator))
+  File "/usr/lib/python3/dist-packages/ply/yacc.py", line 333, in parse
+    return self.parseopt_notrack(input, lexer, debug, tracking, tokenfunc)
+  File "/usr/lib/python3/dist-packages/ply/yacc.py", line 1063, in parseopt_notrack
+    lookahead = get_token()     # Get the next token
+  File "/home/kali/.local/lib/python3.8/site-packages/jsonpath_ng/parser.py", line 193, in token
+    return next(self.iterator)
+  File "/home/kali/.local/lib/python3.8/site-packages/jsonpath_ng/lexer.py", line 39, in tokenize
+    raise JsonPathLexerError('Unexpected EOF in string literal or identifier')
+jsonpath_ng.exceptions.JsonPathLexerError: Unexpected EOF in string literal or identifier
+

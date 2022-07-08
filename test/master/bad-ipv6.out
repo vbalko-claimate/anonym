@@ -1,0 +1,2 @@
+Processing input/bad-ipv6.csv
+Error parsing IP: :::: (field: test, line: 2)
