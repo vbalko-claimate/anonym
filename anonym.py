@@ -23,7 +23,7 @@ import ipaddress
 import random
 import traceback
 
-VERSION = "1.02"
+VERSION = "1.03"
 TOOL_NAME = f"Anonym {VERSION}" 
 
 args = None          # Parsed command line arguments
@@ -167,7 +167,7 @@ class IDField(Field):
 class HostField(Field):
 	""" Anonymize host names """
 	def anonymize_data(self, data):
-		return fake.hostname(0)
+		return fake.hostname(len(data.split('.')) - 1)
 
 class IPField(Field):
 	""" Anonymize IPs """
