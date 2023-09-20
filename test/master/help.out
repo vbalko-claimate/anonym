@@ -3,7 +3,7 @@ usage: anonym.py [-h] [-Fn FIELD_NAME] [-Fe FIELD_EMAIL] [-Fu FIELD_ID]
                  [-t {csv,json}] [-p] -o OUTPUT_FOLDER [-v]
                  files [files ...]
 
-Anonym 1.02 - data anonymization tool
+Anonym 1.04 - data anonymization tool
 
 positional arguments:
   files                 Names of the data file(s) to anonymize

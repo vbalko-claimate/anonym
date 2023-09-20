@@ -111,6 +111,14 @@ python3 anonym.py -o out -Fn userDisplayName_s -Fe userPrincipalName_s -Fc locat
 -Fi IPAddress -Fe UserId_s -Fi ClientIP_s -Fi ActorIpAddress_s -Fe 'Actor_s.$[?(@.Type==5)].ID' signins.csv aaad.csv
 ```
 
+## Testing
+
+If you are making changes to the code base, make sure to:
+
+* Execute the tests by running [tests.sh](test/tests.sh)
+* Update the masters as necessary
+* Add new tests if existing tests do not execute the changed functionality
+
 ## Change log
 
 Version 1.01:
@@ -120,3 +128,15 @@ Version 1.01:
 Version 1.02:
 
 * Lowercase e-mails to make the fake versions more predictable
+
+Version 1.03:
+
+* More robust handling of domain names with multiple parts
+
+Version 1.04:
+
+* Better handling of IPs with CIDR components
+* Making sure fake host name has as many parts as the original
+* Minor bug fixes: correcting type handling, random seed
+* Updating test masters to account for newline characters
+* Added new unit tests for CIDR IPs and hostnames with different parts

@@ -6,21 +6,25 @@ OUT=./output
 rm -rf $OUT
 mkdir $OUT
 
+# Run test and compare screen output to master
 test() {
   echo "Testing: $1"
   python3 ../anonym.py $3 >$OUT/$2.out 2>&1
   diff ./master/$2.out $OUT/$2.out
 }
 
+# Run test and compare screen output to master, and output file to master output file
 test_file() {
   test "$1" "$2" "$3"
   diff ./master/$4 $OUT/$4
 }
 
+# Check if file exists
 check_not_exists() {
 	if [ -e $1 ]; then echo "$1 exists, but should not!"; fi
 }
 
+# Run all tests
 test      "No arguments"           "no_arguments"       ""
 test      "Help"                   "help"               "-h"
 test_file "Simple CSV"             "simple-csv"         "-p -o output -Fe email -Fn name -Fu id -Fi ip -Fh host -Fc long -Fc lat input/simple-csv.csv" "simple-csv.csv"
@@ -39,5 +43,7 @@ test      "Bad JSON file"          "bad-json-file"      "-o output -t json -Fi t
 test      "Missing input file"     "missing-input-file" "-o output -Fi test input/missing.csv"
 test      "Missing output folder"  "missing-out-folder" "-o missing -Fi test input/simple-csv.csv"
 test_file "Dirty IPs"              "dirty-ips"          "-p -o output -Fi ip input/dirty-ips.csv" "dirty-ips.csv"
+test_file "CIDR IPs"               "cidr-ips"           "-p -o output -Fi test input/cidr-ips.csv" "cidr-ips.csv"
+test_file "Host names"             "host-names"         "-p -o output -Fh test input/host-names.csv" "host-names.csv"
 
 
