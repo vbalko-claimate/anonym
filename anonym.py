@@ -23,7 +23,7 @@ import ipaddress
 import random
 import traceback
 
-VERSION = "1.03"
+VERSION = "1.04"
 TOOL_NAME = f"Anonym {VERSION}" 
 
 args = None          # Parsed command line arguments
@@ -31,7 +31,6 @@ handler_defs = []	 # Current handler definitions
 current_line = -1    # Current line in the CSV file
 
 fake = Faker()
-random.seed(0)
 
 def warning(msg, print_exception = False, field = None):
 	""" Print warning message. """
@@ -167,7 +166,11 @@ class IDField(Field):
 class HostField(Field):
 	""" Anonymize host names """
 	def anonymize_data(self, data):
-		return fake.hostname(len(data.split('.')) - 1)
+		num_parts = data.count('.') + 1
+		if num_parts == 1:
+			return fake.hostname(0)
+		else:
+			return fake.domain_name(num_parts-1)
 
 class IPField(Field):
 	""" Anonymize IPs """
@@ -205,28 +208,60 @@ class IPField(Field):
 		""" Anonymize IPs """
 		if data.count(".") == 3:
 			# IPv4
+
+			# CIDR handling
+			is_cidr = False
+			if "/" in data:
+				is_cidr = True
+				data, netmask, *_ = data.split("/")
+				try:
+					val = int(netmask)
+					if val < 0 or val > 32:
+						is_cidr = False
+				except ValueError:
+					is_cidr = False
 			try:
 				ip = ipaddress.IPv4Address(data)
 			except:
 				warning("Error parsing IP: "+data, True, self.get_field_spec())
 				return data
 
-			return self.gen_new_ip(str(ip), ".", 3, lambda : fake.ipv4_public())
+			new_ip = self.gen_new_ip(str(ip), ".", 3, lambda: fake.ipv4_public())
+			if is_cidr:
+				return str(ipaddress.IPv4Network(new_ip + "/" + netmask, strict=False))
+			return new_ip
 		else:
 			# IPv6
+
+			# CIDR handling
+			is_cidr = False
+			if "/" in data:
+				is_cidr = True
+				data, netmask, *_ = data.split("/")
+				try:
+					val = int(netmask)
+					if val < 0 or val > 128:
+						is_cidr = False
+				except ValueError:
+					is_cidr = False
 			try:
 				ip = ipaddress.IPv6Address(data).exploded
 			except:
 				warning("Error parsing IP: "+data, True, self.get_field_spec())
 				return data
-			
-			return self.gen_new_ip(ip, ":", 4, lambda : ipaddress.IPv6Address(fake.ipv6()).exploded)
+
+			new_ip = self.gen_new_ip(ip, ":", 4, lambda: ipaddress.IPv6Address(fake.ipv6()).exploded)
+			if is_cidr:
+				return str(ipaddress.IPv6Network(new_ip + "/" + netmask, strict=False))
+			return new_ip
 
 class CoordField(Field):
 
 	def clean(self, data):
 		""" Convert values to strings """
+		self.type = str
 		if isinstance(data, float):
+			self.type = float
 			return str(data)
 		return data
 
@@ -240,7 +275,7 @@ class CoordField(Field):
 
 		# We randomize with up to 0.5 degree difference (+/-50km)
 		val = "%.3f" % (float_val + (random.randrange(1000) - 500) * 0.001)
-		return val
+		return self.type(val)
 
 def parse_params():
 	""" Parse parameters. """
@@ -278,6 +313,7 @@ def parse_params():
 	if not args.predictable_names:
 		seed = time.time()
 	Faker.seed(seed)
+	random.seed(seed)
 
 def process_field_param(value, cls):
 	""" Match field spec to a handler object """
@@ -382,8 +418,8 @@ def process():
 		# Exit without impediment when requested
 		except SystemExit:
 			pass
-		except:
-			error("Error processing file", True)
+		except Exception as e:
+			error("Error processing file:" + traceback.format_exc(), True)
 		finally:
 			out_file.close()
 			in_file.close()
