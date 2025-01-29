@@ -16,6 +16,8 @@ import argparse
 import os
 import os.path
 from faker import Faker
+from faker.providers import internet
+import faker_commerce
 import jsonpath_ng
 import jsonpath_ng.ext
 import time
@@ -31,6 +33,8 @@ handler_defs = []	 # Current handler definitions
 current_line = -1    # Current line in the CSV file
 
 fake = Faker()
+fake.add_provider(faker_commerce.Provider)
+fake.add_provider(internet)
 
 def warning(msg, print_exception = False, field = None):
 	""" Print warning message. """
@@ -129,9 +133,58 @@ class Field:
 
 	def matches(self, val):
 		""" Check if the path matches the JSON """
-		return self.path.find(val)
+		if '..' in self.field_spec:
+			# Handle recursive search
+			return self._recursive_find(val)
+		else:
+			# Regular jsonpath search
+			return self.path.find(val)
 
-			
+	def _recursive_find(self, data):
+		""" Recursively find all matching elements in the JSON structure """
+		matches = []
+		
+		# Extract the field name we're looking for (after the ..)
+		field_name = self.field_spec.split('..')[-1]
+		
+		def _search_dict(obj, path):
+			if isinstance(obj, dict):
+				for key, value in obj.items():
+					if key == field_name:
+						# Create a custom match object similar to jsonpath
+						matches.append(JsonPathMatch(path + [key], value))
+					if isinstance(value, (dict, list)):
+						_search_dict(value, path + [key])
+			elif isinstance(obj, list):
+				for i, item in enumerate(obj):
+					if isinstance(item, (dict, list)):
+						_search_dict(item, path + [i])
+		
+		_search_dict(data, [])
+		return matches
+
+class JsonPathMatch:
+	""" Custom class to mimic jsonpath match objects """
+	def __init__(self, path, value):
+		self.full_path = self
+		self.value = value
+		self._path = path
+	
+	def update(self, data, new_value):
+		""" Update the value at the specified path """
+		current = data
+		for i, part in enumerate(self._path[:-1]):
+			if isinstance(current, dict):
+				current = current[part]
+			elif isinstance(current, list):
+				current = current[int(part)]
+		
+		if isinstance(current, dict):
+			current[self._path[-1]] = new_value
+		elif isinstance(current, list):
+			current[int(self._path[-1])] = new_value
+		return data
+
 class NameField(Field):
 	""" Anonymize using 'FirstName LastName' """
 	def anonymize_data(self, data):
@@ -276,10 +329,41 @@ class CoordField(Field):
 		# We randomize with up to 0.5 degree difference (+/-50km)
 		val = "%.3f" % (float_val + (random.randrange(1000) - 500) * 0.001)
 		return self.type(val)
+	
+class PriceField(Field):
+	def anonymize_data(self, data):
+		return fake.pyfloat(left_digits=3, right_digits=2, positive=True)
+
+class ProductNameField(Field):
+	def anonymize_data(self, data):
+		return fake.ecommerce_name()
+
+class CompanyNameField(Field):
+	def anonymize_data(self, data):
+		return fake.company()
+
+class AddressField(Field):
+	def anonymize_data(self, data):
+		return fake.street_address()
+
+class AddressFieldZip(Field):
+	def anonymize_data(self, data):
+		return fake.zipcode()
+	
+class HostnameField(Field):
+	def anonymize_data(self, data):
+		return fake.hostname()
+
+class WordField(Field):
+	def anonymize_data(self, data):
+		return fake.word()
+
+
 
 def parse_params():
 	""" Parse parameters. """
 	global args, handler_defs
+
 	
 	parser = argparse.ArgumentParser(description=TOOL_NAME+" - data anonymization tool")
 	parser.add_argument("files", nargs='+', help="Names of the data file(s) to anonymize")
@@ -290,6 +374,13 @@ def parse_params():
 	parser.add_argument("-Fi", "--field-ip",    help="Field containing IPs",            type=str, action='append')
 	parser.add_argument("-Fc", "--field-coord", help="Field containing coordinates",    type=str, action='append')
 	parser.add_argument("-Fh", "--field-host",  help="Field containing host names",     type=str, action='append')
+	parser.add_argument("-Fpr", "--field-price", help="Field containing price", 			type=str, action='append')
+	parser.add_argument("-Fpn", "--field-product-name", help="Field containing product name", 	type=str, action='append')
+	parser.add_argument("-Fcn", "--field-company-name", help="Field containing company name", 	type=str, action='append')
+	parser.add_argument("-Fas", "--field-address-street", help="Field containing address street", 	type=str, action='append')
+	parser.add_argument("-Faz", "--field-address-zip", help="Field containing address zip", 	type=str, action='append')
+	parser.add_argument("-Fho", "--field-hostname", help="Field containing hostname", 	type=str, action='append')
+	parser.add_argument("-Fwo", "--field-word", help="Field containing word", 	type=str, action='append')
 	parser.add_argument("-t",  "--type", help="Type of input files; valid values - 'csv' (default), 'json'", type=str, default='csv', choices=['csv', 'json'])
 	parser.add_argument("-p",  "--predictable-names", help="Generate predictable artificial names (to use for regression testing)", action='store_true')
 	parser.add_argument("-o",  "--output-folder", help="Output folder to use", type=str, required=True)
@@ -303,7 +394,14 @@ def parse_params():
 	handler_defs.extend(process_field_param(args.field_ip,    IPField))
 	handler_defs.extend(process_field_param(args.field_coord, CoordField))
 	handler_defs.extend(process_field_param(args.field_host,  HostField))
-	
+	handler_defs.extend(process_field_param(args.field_price, PriceField))	
+	handler_defs.extend(process_field_param(args.field_product_name, ProductNameField))	
+	handler_defs.extend(process_field_param(args.field_company_name, CompanyNameField))	
+	handler_defs.extend(process_field_param(args.field_address_street, AddressField))	
+	handler_defs.extend(process_field_param(args.field_address_zip, AddressFieldZip))	
+	handler_defs.extend(process_field_param(args.field_hostname, HostField))	
+	handler_defs.extend(process_field_param(args.field_word, WordField))	
+
 	# Check output folder
 	if not os.path.isdir(args.output_folder):
 		error("Output folder does not exist: "+args.output_folder)
@@ -377,13 +475,13 @@ def process():
 		print("Processing " + file)
 		
 		try:
-			in_file = open(file, 'r') 
+			in_file = open(file, 'r', encoding='utf-8-sig') 
 		except:
 			error("Error opening input file: "+file, True)
 		
 		try:
 			out_file_name = os.path.join(args.output_folder, os.path.basename(file))
-			out_file = open(out_file_name, 'w')
+			out_file = open(out_file_name, 'w', encoding='utf-8')
 		except:
 			error("Error opening output file: "+out_file_name, True)
 		
